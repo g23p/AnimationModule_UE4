@@ -20,7 +20,6 @@ class ComponentAnimationClass
 {
 	float TotalTime;
 	float TimeNow;
-	float TimeRemaining;
 	USceneComponent* InComponent;
 	bool bIsIncrement;
 	FVector NewVector;
@@ -37,7 +36,6 @@ class ComponentAnimationClass
 public:
 	ComponentAnimationClass(float Duration, USceneComponent* Com, bool IsInc, FVector Vec, FRotator Rot, FVector Sca)
 		: TotalTime(Duration)
-		, TimeRemaining(Duration)
 		, TimeNow(0.f)
 		, InComponent(Com)
 		, bIsIncrement(IsInc)
@@ -64,10 +62,9 @@ public:
 
 	void myUpdateOperation(float myElapsedTime)
 	{
-		TimeRemaining -= myElapsedTime;
-		TimeNow = TotalTime - TimeRemaining;
+		TimeNow += myElapsedTime;
 
-		if (TimeRemaining > 0.f)
+		if (TimeNow < TotalTime)
 		{
 			InComponent->SetRelativeLocation((TimeNow / TotalTime) * (TargetLocation - ComponentLocation) + ComponentLocation);
 			InComponent->SetRelativeRotation((TimeNow / TotalTime) * (TargetRotation - ComponentRotation) + ComponentRotation);
@@ -81,11 +78,6 @@ public:
 			
 			bFinished = true;
 		}
-	}
-
-	void FinishNow()
-	{
-		TimeRemaining = 0.f;
 	}
 
 	bool IsFinished()

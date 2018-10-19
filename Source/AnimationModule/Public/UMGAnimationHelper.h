@@ -20,7 +20,6 @@ class UMGAnimationClass
 {
 	float TotalTime;
 	float TimeNow;
-	float TimeRemaining;
 	UWidget* InWidget;
 	UCanvasPanelSlot* WidgetSlot;
 	bool bIsIncrement;
@@ -37,7 +36,6 @@ class UMGAnimationClass
 public:
 	UMGAnimationClass(float Duration, UWidget* Widget, bool isInc, FVector2D Siz, FVector2D Pos, FVector2D Piv)
 		: TotalTime(Duration)
-		, TimeRemaining(Duration)
 		, TimeNow(0.f)
 		, InWidget(Widget)
 		, bIsIncrement(isInc)
@@ -68,10 +66,9 @@ public:
 
 	void myUpdateOperation(float myElapsedTime)
 	{
-		TimeRemaining -= myElapsedTime;
-		TimeNow = TotalTime - TimeRemaining;
+		TimeNow += myElapsedTime;
 
-		if (TimeRemaining > 0.f)
+		if (TimeNow < TotalTime)
 		{
 			WidgetSlot->SetSize((TimeNow / TotalTime) * (TargetSize - UMGSize) + UMGSize);
 			WidgetSlot->SetPosition((TimeNow / TotalTime) * (TargetPosition - UMGPosition) + UMGPosition);
