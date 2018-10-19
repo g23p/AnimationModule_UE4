@@ -1,2 +1,2 @@
 # AnimationModule_UE4
-Change Component/Slot Transform by Latent
+使用Latent来更改Component或Widget/Slot的位置大小等
