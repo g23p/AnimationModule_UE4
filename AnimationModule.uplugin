@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "AnimationModule",
+	"Description": "使用Latent改变Component或Widget的Slot的位置、大小等",
+	"Category": "Other",
+	"CreatedBy": "Baustein",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "AnimationModule",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
