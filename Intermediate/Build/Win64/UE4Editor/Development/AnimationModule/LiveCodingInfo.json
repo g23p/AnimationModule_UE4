@@ -1,0 +1,15 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.AnimationModule.cpp.obj": [
+			"AnimationModule.cpp.obj",
+			"ComponentAnimationHelper.cpp.obj",
+			"UMGAnimationHelper.cpp.obj"
+		],
+		"Module.AnimationModule.gen.cpp.obj": [
+			"AnimationModule.init.gen.cpp.obj",
+			"ComponentAnimationHelper.gen.cpp.obj",
+			"UMGAnimationHelper.gen.cpp.obj"
+		]
+	}
+}

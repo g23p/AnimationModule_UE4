@@ -1,11 +1,11 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 /*===========================================================================
 	Generated code exported from UnrealHeaderTool.
 	DO NOT modify this manually! Edit the corresponding .h files instead!
 ===========================================================================*/
 
-#include "ObjectMacros.h"
-#include "ScriptMacros.h"
+#include "UObject/ObjectMacros.h"
+#include "UObject/ScriptMacros.h"
 
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 class UObject;
@@ -18,12 +18,14 @@ struct FVector2D;
 #endif
 #define ANIMATIONMODULE_UMGAnimationHelper_generated_h
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_145_GENERATED_BODY \
-	friend ANIMATIONMODULE_API class UScriptStruct* Z_Construct_UScriptStruct_FUMGAniamtionStruct(); \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_142_GENERATED_BODY \
+	friend struct Z_Construct_UScriptStruct_FUMGAniamtionStruct_Statics; \
 	ANIMATIONMODULE_API static class UScriptStruct* StaticStruct();
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_RPC_WRAPPERS \
+template<> ANIMATIONMODULE_API UScriptStruct* StaticStruct<struct FUMGAniamtionStruct>();
+
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_RPC_WRAPPERS \
  \
 	DECLARE_FUNCTION(execPlayUMGAnimation) \
 	{ \
@@ -52,7 +54,7 @@ struct FVector2D;
 	}
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_RPC_WRAPPERS_NO_PURE_DECLS \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_RPC_WRAPPERS_NO_PURE_DECLS \
  \
 	DECLARE_FUNCTION(execPlayUMGAnimation) \
 	{ \
@@ -81,27 +83,25 @@ struct FVector2D;
 	}
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_INCLASS_NO_PURE_DECLS \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesUUMGAnimationHelper(); \
-	friend ANIMATIONMODULE_API class UClass* Z_Construct_UClass_UUMGAnimationHelper(); \
+	friend struct Z_Construct_UClass_UUMGAnimationHelper_Statics; \
 public: \
-	DECLARE_CLASS(UUMGAnimationHelper, UBlueprintFunctionLibrary, COMPILED_IN_FLAGS(0), 0, TEXT("/Script/AnimationModule"), NO_API) \
-	DECLARE_SERIALIZER(UUMGAnimationHelper) \
-	enum {IsIntrinsic=COMPILED_IN_INTRINSIC};
+	DECLARE_CLASS(UUMGAnimationHelper, UBlueprintFunctionLibrary, COMPILED_IN_FLAGS(0), CASTCLASS_None, TEXT("/Script/AnimationModule"), NO_API) \
+	DECLARE_SERIALIZER(UUMGAnimationHelper)
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_INCLASS \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_INCLASS \
 private: \
 	static void StaticRegisterNativesUUMGAnimationHelper(); \
-	friend ANIMATIONMODULE_API class UClass* Z_Construct_UClass_UUMGAnimationHelper(); \
+	friend struct Z_Construct_UClass_UUMGAnimationHelper_Statics; \
 public: \
-	DECLARE_CLASS(UUMGAnimationHelper, UBlueprintFunctionLibrary, COMPILED_IN_FLAGS(0), 0, TEXT("/Script/AnimationModule"), NO_API) \
-	DECLARE_SERIALIZER(UUMGAnimationHelper) \
-	enum {IsIntrinsic=COMPILED_IN_INTRINSIC};
+	DECLARE_CLASS(UUMGAnimationHelper, UBlueprintFunctionLibrary, COMPILED_IN_FLAGS(0), CASTCLASS_None, TEXT("/Script/AnimationModule"), NO_API) \
+	DECLARE_SERIALIZER(UUMGAnimationHelper)
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_STANDARD_CONSTRUCTORS \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UUMGAnimationHelper(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UUMGAnimationHelper) \
@@ -114,7 +114,7 @@ private: \
 public:
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_ENHANCED_CONSTRUCTORS \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UUMGAnimationHelper(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
@@ -127,32 +127,34 @@ DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UUMGAnimationHelper); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UUMGAnimationHelper)
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_PRIVATE_PROPERTY_OFFSET
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_PROLOG
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_GENERATED_BODY_LEGACY \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_PRIVATE_PROPERTY_OFFSET
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_233_PROLOG
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_GENERATED_BODY_LEGACY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_PRIVATE_PROPERTY_OFFSET \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_RPC_WRAPPERS \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_INCLASS \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_STANDARD_CONSTRUCTORS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_PRIVATE_PROPERTY_OFFSET \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_RPC_WRAPPERS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_INCLASS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_STANDARD_CONSTRUCTORS \
 public: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
-#define ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_GENERATED_BODY \
+#define ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_PRIVATE_PROPERTY_OFFSET \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_RPC_WRAPPERS_NO_PURE_DECLS \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_INCLASS_NO_PURE_DECLS \
-	ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_239_ENHANCED_CONSTRUCTORS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_PRIVATE_PROPERTY_OFFSET \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_RPC_WRAPPERS_NO_PURE_DECLS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_INCLASS_NO_PURE_DECLS \
+	ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h_236_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
+template<> ANIMATIONMODULE_API UClass* StaticClass<class UUMGAnimationHelper>();
+
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID ActorMovingLatent_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h
+#define CURRENT_FILE_ID ModuleTest_Plugins_AnimationModule_Source_AnimationModule_Public_UMGAnimationHelper_h
 
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

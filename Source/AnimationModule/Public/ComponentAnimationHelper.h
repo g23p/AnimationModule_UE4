@@ -43,8 +43,8 @@ public:
 		, NewRotation(Rot)
 		, NewScale(Sca)
 		, bFinished(false)
-		, TargetRotation(FRotator(0.f, 0.f, 0.f))
 		, TargetLocation(FVector(0.f, 0.f, 0.f))
+		, TargetRotation(FRotator(0.f, 0.f, 0.f))
 	{
 		ComponentLocation = InComponent->RelativeLocation;
 		ComponentRotation = InComponent->RelativeRotation;

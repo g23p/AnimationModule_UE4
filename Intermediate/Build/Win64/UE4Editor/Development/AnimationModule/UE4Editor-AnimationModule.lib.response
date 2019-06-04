@@ -1,0 +1,14 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UE4Editor-AnimationModule.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"D:\ue_projects\ModuleTest\Intermediate\Build\Win64\ModuleTestEditor\Development\Engine\SharedPCH.Engine.h.obj"
+"D:\ue_projects\ModuleTest\Plugins\AnimationModule\Intermediate\Build\Win64\UE4Editor\Development\AnimationModule\Module.AnimationModule.cpp.obj"
+"D:\ue_projects\ModuleTest\Plugins\AnimationModule\Intermediate\Build\Win64\UE4Editor\Development\AnimationModule\Module.AnimationModule.gen.cpp.obj"
+"D:\ue_projects\ModuleTest\Plugins\AnimationModule\Intermediate\Build\Win64\UE4Editor\Development\AnimationModule\Default.rc2.res"
+/OUT:"D:\ue_projects\ModuleTest\Plugins\AnimationModule\Intermediate\Build\Win64\UE4Editor\Development\AnimationModule\UE4Editor-AnimationModule.lib"
+/INCLUDE:IMPLEMENT_MODULE_AnimationModule
