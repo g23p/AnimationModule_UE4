@@ -3,9 +3,9 @@
 #include "UMGAnimationHelper.h"
 
 
-FUMGAniamtionStruct UUMGAnimationHelper::MakeUMGAnimation(UWidget* InWidget, float Duration, bool IsIncrement, FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot)
+FUMGAniamtionStruct UUMGAnimationHelper::MakeUMGAnimation(UWidget* InWidget, float Duration, bool IsIncrement, FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot, bool bIsNonlinear)
 {
-	UMGAnimationClass* AnimationClass = new UMGAnimationClass(Duration, InWidget, IsIncrement, NewSize, NewPosition, Pivot);
+	UMGAnimationClass* AnimationClass = new UMGAnimationClass(Duration, InWidget, IsIncrement, NewSize, NewPosition, Pivot, bIsNonlinear);
 	FUMGAniamtionStruct AnimationStruct;
 	AnimationStruct.AnimationClass = AnimationClass;
 

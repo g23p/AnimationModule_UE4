@@ -2,9 +2,9 @@
 
 #include "ComponentAnimationHelper.h"
 
-FComponentAnimationStruct UComponentAnimationHelper::MakeComponentAnimation(USceneComponent* InComponent, float Duration, bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale)
+FComponentAnimationStruct UComponentAnimationHelper::MakeComponentAnimation(USceneComponent* InComponent, float Duration, bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale, bool IsNonlinear)
 {
-	ComponentAnimationClass* AnimationClass = new ComponentAnimationClass(Duration, InComponent, IsIncrement, NewVector, NewRotation, NewScale);
+	ComponentAnimationClass* AnimationClass = new ComponentAnimationClass(Duration, InComponent, IsIncrement, NewVector, NewRotation, NewScale, IsNonlinear);
 	FComponentAnimationStruct AnimationStruct;
 	AnimationStruct.AnimationClass = AnimationClass;
 

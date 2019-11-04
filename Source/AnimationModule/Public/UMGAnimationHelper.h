@@ -8,6 +8,7 @@
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 #include "Runtime/UMG/Public/Components/CanvasPanelSlot.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "UMGAnimationHelper.generated.h"
 
 /**
@@ -26,6 +27,7 @@ class UMGAnimationClass
 	FVector2D NewSize;
 	FVector2D NewPosition;
 	FVector2D Pivot;
+	bool bIsNonlinear;
 	bool bFinished;
 	FVector2D UMGPosition;
 	FVector2D UMGSize;
@@ -34,13 +36,14 @@ class UMGAnimationClass
 	FVector2D Vector2DWithNewSize;
 
 public:
-	UMGAnimationClass(float Duration, UWidget* Widget, bool isInc, FVector2D Siz, FVector2D Pos, FVector2D Piv)
+	UMGAnimationClass(float Duration, UWidget* Widget, bool isInc, FVector2D Siz, FVector2D Pos, FVector2D Piv, bool IsNonlinear)
 		: TotalTime(Duration)
 		, TimeNow(0.f)
 		, InWidget(Widget)
 		, bIsIncrement(isInc)
 		, NewSize(Siz)
 		, NewPosition(Pos)
+		, bIsNonlinear(IsNonlinear)
 		, bFinished(false)
 		, TargetPosition(FVector2D(0.f, 0.f))
 		, TargetSize(FVector2D(0.f, 0.f))
@@ -70,8 +73,16 @@ public:
 
 		if (TimeNow < TotalTime)
 		{
-			WidgetSlot->SetSize((TimeNow / TotalTime) * (TargetSize - UMGSize) + UMGSize);
-			WidgetSlot->SetPosition((TimeNow / TotalTime) * (TargetPosition - UMGPosition) + UMGPosition);
+			if (bIsNonlinear)
+			{
+				WidgetSlot->SetSize(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetSize(), TargetSize, myElapsedTime, 6 / TotalTime));
+				WidgetSlot->SetPosition(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetPosition(), TargetPosition, myElapsedTime, 6 / TotalTime));
+			}
+			else
+			{
+				WidgetSlot->SetSize((TimeNow / TotalTime) * (TargetSize - UMGSize) + UMGSize);
+				WidgetSlot->SetPosition((TimeNow / TotalTime) * (TargetPosition - UMGPosition) + UMGPosition);
+			}
 		}
 		else
 		{
@@ -218,7 +229,7 @@ public:
 				}
 				UMGAnimationArray[UMGAnimationArray.Num() - 1]->GetTargetInfo(TargetPos, TargetSiz);
 			}
-			else
+			else if(UMGAnimationArray.Num() == 1)
 			{
 				UMGAnimationArray[0]->GetTargetInfo(TargetPos, TargetSiz);
 			}
@@ -245,10 +256,11 @@ public:
 	* @param NewPosition       Position的增量或目标Position
 	* @param NewSize           Size的增量或目标Size
 	* @param Pivot             增减大小时的锚点(0,0)为左上，(1,1)为右下
+	* @param bIsNonlinear      动画是否为非线性
 	*/
 	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 1, Duration = 1.f, IsIncrement = 1), Category = "AnimationHelper|UMGAnimation")
 		static FUMGAniamtionStruct MakeUMGAnimation(UWidget* InWidget, float Duration, bool IsIncrement,
-			FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot);
+			FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot, bool bIsNonlinear);
 
 	/**
 	* @param StopPreAction     立刻把上一个动作置为结束时的状态

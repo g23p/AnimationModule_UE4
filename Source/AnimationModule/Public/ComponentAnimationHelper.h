@@ -8,6 +8,7 @@
 #include "Runtime/Engine/Classes/Components/SceneComponent.h"
 #include "Engine/LatentActionManager.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "ComponentAnimationHelper.generated.h"
 
 /**
@@ -25,6 +26,7 @@ class ComponentAnimationClass
 	FVector NewVector;
 	FRotator NewRotation;
 	FVector NewScale;
+	bool bIsNonlinear;
 	FVector ComponentLocation;
 	FRotator ComponentRotation;
 	FVector ComponentScale;
@@ -34,7 +36,7 @@ class ComponentAnimationClass
 	FVector TargetScale;
 
 public:
-	ComponentAnimationClass(float Duration, USceneComponent* Com, bool IsInc, FVector Vec, FRotator Rot, FVector Sca)
+	ComponentAnimationClass(float Duration, USceneComponent* Com, bool IsInc, FVector Vec, FRotator Rot, FVector Sca, bool IsNonlinear)
 		: TotalTime(Duration)
 		, TimeNow(0.f)
 		, InComponent(Com)
@@ -42,6 +44,7 @@ public:
 		, NewVector(Vec)
 		, NewRotation(Rot)
 		, NewScale(Sca)
+		, bIsNonlinear(IsNonlinear)
 		, bFinished(false)
 		, TargetLocation(FVector(0.f, 0.f, 0.f))
 		, TargetRotation(FRotator(0.f, 0.f, 0.f))
@@ -66,9 +69,18 @@ public:
 
 		if (TimeNow < TotalTime)
 		{
-			InComponent->SetRelativeLocation((TimeNow / TotalTime) * (TargetLocation - ComponentLocation) + ComponentLocation);
-			InComponent->SetRelativeRotation((TimeNow / TotalTime) * (TargetRotation - ComponentRotation) + ComponentRotation);
-			InComponent->SetRelativeScale3D((TimeNow / TotalTime) * (TargetScale - ComponentScale) + ComponentScale);
+			if (bIsNonlinear)
+			{
+				InComponent->SetRelativeLocation(UKismetMathLibrary::VInterpTo(InComponent->RelativeLocation, TargetLocation, myElapsedTime, 6 / TotalTime));
+				InComponent->SetRelativeRotation(UKismetMathLibrary::RInterpTo(InComponent->RelativeRotation, TargetRotation, myElapsedTime, 6 / TotalTime));
+				InComponent->SetRelativeScale3D(UKismetMathLibrary::VInterpTo(InComponent->RelativeScale3D, TargetScale, myElapsedTime, 6 / TotalTime));
+			}
+			else
+			{
+				InComponent->SetRelativeLocation((TimeNow / TotalTime) * (TargetLocation - ComponentLocation) + ComponentLocation);
+				InComponent->SetRelativeRotation((TimeNow / TotalTime) * (TargetRotation - ComponentRotation) + ComponentRotation);
+				InComponent->SetRelativeScale3D((TimeNow / TotalTime) * (TargetScale - ComponentScale) + ComponentScale);
+			}
 		}
 		else
 		{
@@ -155,7 +167,7 @@ public:
 
 	virtual void UpdateOperation(FLatentResponse& Response) override
 	{
-		if (!RunLock && ComponentAnimationArray.Num() != 0)
+		if (!RunLock && ComponentAnimationArray.Num() > 0)
 		{
 			ComponentAnimationArray[0]->myInit();
 			RunLock = true;
@@ -207,7 +219,7 @@ public:
 				}
 				ComponentAnimationArray[ComponentAnimationArray.Num() - 1]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
 			}
-			else
+			else if(ComponentAnimationArray.Num() == 1)
 			{
 				ComponentAnimationArray[0]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
 			}
@@ -233,10 +245,11 @@ public:
 	* @param NewVector         Vector的增量或目标Vector
 	* @param NewRotation       Rotation的增量或目标Rotation
 	* @param NewScale          Scale的增量或目标Scale
+	* @param IsNonlinear       动画是否为非线性
 	*/
 	UFUNCTION(BlueprintPure, meta = (Duration = 1.f, IsIncrement = 1, AdvancedDisplay = 1), Category = "AnimationHelper|ComponentAnimation")
 		static FComponentAnimationStruct MakeComponentAnimation(USceneComponent* InComponent, float Duration, 
-			bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale);
+			bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale, bool bIsNonlinear);
 
 	/**
 	* @param StopPreAction     立刻把上一个动作置为结束时的状态

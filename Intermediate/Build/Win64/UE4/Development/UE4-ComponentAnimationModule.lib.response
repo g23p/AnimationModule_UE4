@@ -1,8 +1,0 @@
-/NOLOGO
-/errorReport:prompt
-/MACHINE:x64
-/SUBSYSTEM:WINDOWS
-"E:\UE4\Projects\DoorBP\Plugins\ComponentAnimationModule\Intermediate\Build\Win64\UE4\Development\ComponentAnimationModule\Module.ComponentAnimationModule.cpp.obj"
-"E:\UE4\Projects\DoorBP\Plugins\ComponentAnimationModule\Intermediate\Build\Win64\UE4\Development\ComponentAnimationModule\Module.ComponentAnimationModule.gen.cpp.obj"
-"E:\UE4\Projects\DoorBP\Intermediate\Build\Win64\UE4\Development\ComponentAnimationModule\PCLaunch.rc.res"
-/OUT:"E:\UE4\Projects\DoorBP\Plugins\ComponentAnimationModule\Binaries\Win64\UE4-ComponentAnimationModule.lib"
