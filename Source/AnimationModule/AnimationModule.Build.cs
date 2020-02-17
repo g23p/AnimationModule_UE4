@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -10,7 +10,6 @@ public class AnimationModule : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"AnimationModule/Public"
 				// ... add public include paths required here ...
 			}
 			);
@@ -18,7 +17,6 @@ public class AnimationModule : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				"AnimationModule/Private",
 				// ... add other private include paths required here ...
 			}
 			);

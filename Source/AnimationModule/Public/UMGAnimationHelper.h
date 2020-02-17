@@ -3,85 +3,213 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine.h"
 #include "LatentActions.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "Engine/LatentActionManager.h"
 #include "Runtime/UMG/Public/Blueprint/UserWidget.h"
 #include "Runtime/UMG/Public/Components/CanvasPanelSlot.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "UMGAnimationHelper.generated.h"
 
-/**
- * 
- */
-
-static TArray<UWidget*> UMGLatentInfoArr;
-
-class UMGAnimationClass
+USTRUCT(BlueprintType)
+struct FUMGAnimationStruct 
 {
-	float TotalTime;
-	float TimeNow;
-	UWidget* InWidget;
+	GENERATED_USTRUCT_BODY()
+
+	/** 操作的widget对象 */
+	UPROPERTY(BlueprintReadWrite)
+		UWidget* InWidget = nullptr;
+
+	/** 动画的总时长 */
+	UPROPERTY(BlueprintReadWrite)
+		float Duration = 1;
+
+	/** 否作为物体原状态的增量添加上去，不是增量则为目标 */
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsIncrement = true;
+
+	/** Position的增量或目标Position */
+	UPROPERTY(BlueprintReadWrite)
+		FVector2D NewPosition = FVector2D(0.f, 0.f);
+
+	/** Size的增量或目标Size */
+	UPROPERTY(BlueprintReadWrite)
+		FVector2D NewSize = FVector2D(0.f, 0.f);
+
+	/** 动画是否为非线性 */
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsNonlinear = true;
+
 	UCanvasPanelSlot* WidgetSlot;
-	bool bIsIncrement;
-	FVector2D NewSize;
-	FVector2D NewPosition;
-	FVector2D Pivot;
-	bool bIsNonlinear;
-	bool bFinished;
-	FVector2D UMGPosition;
-	FVector2D UMGSize;
-	FVector2D TargetPosition;
-	FVector2D TargetSize;
-	FVector2D Vector2DWithNewSize;
+
+	FVector2D PreTargetPosition;
+	FVector2D PreTargetSize;
+
+	void SetPreTarget(FVector2D PreTargetPos, FVector2D PreTargetSiz)
+	{
+		PreTargetPosition = PreTargetPos;
+		PreTargetSize = PreTargetSiz;
+	}
+
+	void GetTargetParam(FVector2D& TargetPosition, FVector2D& TargetSize)
+	{
+		if (bIsIncrement)
+		{
+			TargetPosition = PreTargetPosition + NewPosition;
+			TargetSize = PreTargetSize + NewSize;
+		}
+		else
+		{
+			TargetPosition = NewPosition;
+			TargetSize = NewSize;
+		}
+	}
+
+};
+
+class UMGAnimationHelper
+{
+	TMap<UWidget*, TArray<FUMGAnimationStruct>> UMGAnimationMap;
 
 public:
-	UMGAnimationClass(float Duration, UWidget* Widget, bool isInc, FVector2D Siz, FVector2D Pos, FVector2D Piv, bool IsNonlinear)
-		: TotalTime(Duration)
-		, TimeNow(0.f)
-		, InWidget(Widget)
-		, bIsIncrement(isInc)
-		, NewSize(Siz)
-		, NewPosition(Pos)
-		, bIsNonlinear(IsNonlinear)
-		, bFinished(false)
-		, TargetPosition(FVector2D(0.f, 0.f))
-		, TargetSize(FVector2D(0.f, 0.f))
+
+	static UMGAnimationHelper* GetInstance()
 	{
-		WidgetSlot = Cast<UCanvasPanelSlot>(InWidget->Slot);
-		UMGPosition = WidgetSlot->GetPosition();
-		UMGSize = WidgetSlot->GetSize();
+		static UMGAnimationHelper Instance;
 
-		Pivot = FVector2D(MakeLimit(Piv.X), MakeLimit(Piv.Y));
-
-		Vector2DWithNewSize = -(NewSize * Pivot);
-
-		SetDefaultInfo();
+		return &Instance;
 	}
 
-	void myInit()
+	void StopAllAnimationAndGetPreTarget(UWidget* TargetUMG, FVector2D& PreTargetPos, FVector2D& PreTargetSiz)
 	{
-		SetDefaultInfo();
-		UMGPosition = WidgetSlot->GetPosition();
-		UMGSize = WidgetSlot->GetSize();
-		Vector2DWithNewSize = -(NewSize * Pivot);
+		TArray<FUMGAnimationStruct>* AnimationStructArrPtr = UMGAnimationMap.Find(TargetUMG);
+		if (AnimationStructArrPtr && AnimationStructArrPtr->Num() > 0)
+		{
+			TArray<FUMGAnimationStruct> AnimationStructArr = *AnimationStructArrPtr;
+			AnimationStructArr[0].GetTargetParam(PreTargetPos, PreTargetSiz);
+
+			for (int32 i = 1; i < AnimationStructArr.Num(); i++)
+			{
+				AnimationStructArr[i].SetPreTarget(PreTargetPos, PreTargetSiz);
+				AnimationStructArr[i].GetTargetParam(PreTargetPos, PreTargetSiz);
+			}
+
+			UMGAnimationMap.Remove(TargetUMG);
+		}
+		else
+		{
+			if (UCanvasPanelSlot* WidgetSlot = Cast<UCanvasPanelSlot>(TargetUMG->Slot))
+			{
+				PreTargetPos = WidgetSlot->GetPosition();
+				PreTargetSiz = WidgetSlot->GetSize();
+			}
+		}
 	}
 
-	void myUpdateOperation(float myElapsedTime)
+	void Add(UWidget* InUMG, TArray<FUMGAnimationStruct> InAnimationStructArr)
 	{
-		TimeNow += myElapsedTime;
+		if (TArray<FUMGAnimationStruct>* AnimationStructArr = UMGAnimationMap.Find(InUMG))
+		{
+			AnimationStructArr->Append(InAnimationStructArr);
+		}
+		else
+		{
+			UMGAnimationMap.Add(InUMG, InAnimationStructArr);
+		}
+	}
+
+
+	bool HasAnimation(UWidget* InUMG)
+	{
+		if (TArray<FUMGAnimationStruct>* AnimationStructArr = UMGAnimationMap.Find(InUMG))
+		{
+			if (AnimationStructArr->Num() > 0)
+				return true;
+		}
+		
+		return false;
+	}
+
+	TArray<FUMGAnimationStruct>* GetAnimationStructArr(UWidget* InUMG)
+	{
+		return UMGAnimationMap.Find(InUMG);
+	}
+};
+
+class FUMGAnimationContainer : public FPendingLatentAction
+{
+public:
+	FName ExecutionFunction;
+	int32 OutputLink;
+	FWeakObjectPtr CallbackTarget;
+
+	UWidget* UMGPtr;
+	UCanvasPanelSlot* WidgetSlot;
+
+	float TotalTime;
+	bool bIsIncrement;
+	FVector2D UMGPosition;
+	FVector2D UMGSize;
+	bool bIsNonlinear;
+
+	FVector2D TargetPosition;
+	FVector2D TargetSize;
+
+	UMGAnimationHelper* AnimationHelper;
+	TArray<FUMGAnimationStruct>* AnimationStructArr;
+	
+	float TimeNow;
+	int32 StructArrIndex;
+	bool bStopThisAction;
+
+	FUMGAnimationContainer(const FLatentActionInfo& LatentInfo, UWidget* InWidget)
+		: ExecutionFunction(LatentInfo.ExecutionFunction)
+		, OutputLink(LatentInfo.Linkage)
+		, CallbackTarget(LatentInfo.CallbackTarget)
+		, UMGPtr(InWidget)
+		, bStopThisAction(false)
+	{
+		AnimationHelper = UMGAnimationHelper::GetInstance();
+		WidgetSlot = Cast<UCanvasPanelSlot>(UMGPtr->Slot);
+		if (WidgetSlot && AnimationHelper->HasAnimation(InWidget))
+		{
+			GetNewStructArr();
+			GetDataFromNewStruct();
+
+			UMGPosition = WidgetSlot->GetPosition();
+			UMGSize = WidgetSlot->GetSize();
+			
+			TimeNow = 0.f;
+			StructArrIndex = 0;
+		}
+		else
+		{
+			StopThisLatent();
+		}
+
+	}
+
+	virtual void UpdateOperation(FLatentResponse& Response) override
+	{
+		TimeNow += Response.ElapsedTime();
+
+		if (bStopThisAction)
+		{
+			Response.TriggerLink(ExecutionFunction, OutputLink, CallbackTarget);
+			Response.DoneIf(true);
+		}
 
 		if (TimeNow < TotalTime)
 		{
 			if (bIsNonlinear)
 			{
-				WidgetSlot->SetSize(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetSize(), TargetSize, myElapsedTime, 6 / TotalTime));
-				WidgetSlot->SetPosition(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetPosition(), TargetPosition, myElapsedTime, 6 / TotalTime));
+				WidgetSlot->SetPosition(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetPosition(), TargetPosition, Response.ElapsedTime(), 6 / TotalTime));
+				WidgetSlot->SetSize(UKismetMathLibrary::Vector2DInterpTo(WidgetSlot->GetSize(), TargetSize, Response.ElapsedTime(), 6 / TotalTime));
 			}
 			else
 			{
-				WidgetSlot->SetSize((TimeNow / TotalTime) * (TargetSize - UMGSize) + UMGSize);
 				WidgetSlot->SetPosition((TimeNow / TotalTime) * (TargetPosition - UMGPosition) + UMGPosition);
+				WidgetSlot->SetSize((TimeNow / TotalTime) * (TargetSize - UMGSize) + UMGSize);
 			}
 		}
 		else
@@ -89,183 +217,48 @@ public:
 			WidgetSlot->SetPosition(TargetPosition);
 			WidgetSlot->SetSize(TargetSize);
 
-			bFinished = true;
-		}
-	}
+			if (AnimationStructArr->Num() > 0)
+				AnimationStructArr->RemoveAt(0);
 
-	bool IsFinished()
-	{
-		return bFinished;
-	}
-
-	void SetStartInfo(FVector2D StartPos, FVector2D StartSiz)
-	{
-		UMGPosition = StartPos;
-		UMGSize = StartSiz;
-
-		SetDefaultInfo();
-	}
-
-	void GetTargetInfo(FVector2D& TargetPos, FVector2D& TargetSiz)
-	{
-		TargetPos = TargetPosition;
-		TargetSiz = TargetSize;
-	}
-
-	void SetDefaultInfo()
-	{
-		if (bIsIncrement)
-		{
-			TargetPosition = UMGPosition + NewPosition + Vector2DWithNewSize;
-			TargetSize = UMGSize + NewSize;
-		}
-		else
-		{
-			TargetPosition = NewPosition - (NewSize - WidgetSlot->GetSize()) * Pivot;
-			TargetSize = NewSize;
-		}
-	}
-
-	UCanvasPanelSlot* GetInSlot()
-	{
-		return WidgetSlot;
-	}
-
-	UWidget* GetWidget()
-	{
-		return InWidget;
-	}
-
-	float MakeLimit(float num)
-	{
-		if (num > 1)
-			return 1;
-		else if (num < 0)
-			return 0;
-		else
-			return num;
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FUMGAniamtionStruct
-{
-	GENERATED_USTRUCT_BODY()
-		UMGAnimationClass* AnimationClass;
-
-};
-
-class UMGAnimationContainer : public FPendingLatentAction
-{
-public:
-	UWidget* MovingWidget;
-	UCanvasPanelSlot* WidgetSlot;
-	FName ExecutionFunction;
-	int32 OutputLink;
-	FWeakObjectPtr CallbackTarget;
-	int32 UUID;
-	bool RunLock;
-	TArray<UMGAnimationClass*> UMGAnimationArray;
-
-	UMGAnimationContainer(const FLatentActionInfo& LatentInfo, UMGAnimationClass* InAnimationClass, UWidget* InWidget)
-		: MovingWidget(InWidget)
-		, ExecutionFunction(LatentInfo.ExecutionFunction)
-		, OutputLink(LatentInfo.Linkage)
-		, CallbackTarget(LatentInfo.CallbackTarget)
-		, UUID(LatentInfo.UUID)
-		, RunLock(false)
-	{
-		UMGAnimationArray.Add(InAnimationClass);
-	}
-
-	virtual void UpdateOperation(FLatentResponse& Response) override
-	{
-		if (!RunLock && UMGAnimationArray.Num() != 0)
-		{
-			UMGAnimationArray[0]->myInit();
-			RunLock = true;
-		}
-		else if (RunLock)
-		{
-			if (!UMGAnimationArray[0]->IsFinished())
+			if (AnimationStructArr->Num() > 0)
 			{
-				UMGAnimationArray[0]->myUpdateOperation(Response.ElapsedTime());
+				AnimationStructArr->GetData()->SetPreTarget(TargetPosition, TargetSize);
+				GetDataFromNewStruct();
 			}
 			else
-			{
-				if (UMGAnimationArray.Num() > 1)
-				{
-					FVector2D TargetPos;
-					FVector2D TargetSiz;
-					UMGAnimationArray[0]->GetTargetInfo(TargetPos, TargetSiz);
-					UMGAnimationArray[1]->SetStartInfo(TargetPos, TargetSiz);
-				}
-				delete UMGAnimationArray[0];
-				UMGAnimationArray[0] = nullptr;
-				UMGAnimationArray.RemoveAt(0);
-				RunLock = false;
-			}
-		}
-		else
-		{
-			UMGLatentInfoArr.Remove(MovingWidget);
-			Response.TriggerLink(ExecutionFunction, OutputLink, CallbackTarget);
-			Response.DoneIf(true);
+				StopThisLatent();
 		}
 	}
 
-	void AddAnimation(UMGAnimationClass* UMGAnimation, bool FinishPreAction)
+	void GetNewStructArr()
 	{
-		if (FinishPreAction)
-		{
-			FVector2D TargetPos;
-			FVector2D TargetSiz;
-			if (UMGAnimationArray.Num() > 1)
-			{
-				for (int x = 0; x < UMGAnimationArray.Num() - 1; x++)
-				{
-					UMGAnimationArray[x]->GetTargetInfo(TargetPos, TargetSiz);
-					UMGAnimationArray[x + 1]->SetStartInfo(TargetPos, TargetSiz);
-				}
-				UMGAnimationArray[UMGAnimationArray.Num() - 1]->GetTargetInfo(TargetPos, TargetSiz);
-			}
-			else if(UMGAnimationArray.Num() == 1)
-			{
-				UMGAnimationArray[0]->GetTargetInfo(TargetPos, TargetSiz);
-			}
-			UMGAnimation->SetStartInfo(TargetPos, TargetSiz);
-			UMGAnimationArray.Empty();
-			RunLock = false;
-		}
-		UMGAnimationArray.Add(UMGAnimation);
+		AnimationStructArr = AnimationHelper->GetAnimationStructArr(UMGPtr);
+	}
+
+	void GetDataFromNewStruct()
+	{
+		TotalTime = AnimationStructArr->GetData()->Duration;
+		bIsIncrement = AnimationStructArr->GetData()->bIsIncrement;
+		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
+		AnimationStructArr->GetData()->GetTargetParam(TargetPosition, TargetSize);
+		TimeNow = 0.f;
+	}
+
+	void StopThisLatent()
+	{
+		bStopThisAction = true;
 	}
 };
 
+/**
+ * 
+ */
 UCLASS()
 class ANIMATIONMODULE_API UUMGAnimationHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-public:
-
-
-	/**
-	* @param InWidget          操作的Widget对象
-	* @param Duration          动画的总时长
-	* @param IsIncrement       NewPosition和NewSize是否是作为物体原状态的增量添加上去，不是增量则为目标
-	* @param NewPosition       Position的增量或目标Position
-	* @param NewSize           Size的增量或目标Size
-	* @param Pivot             增减大小时的锚点(0,0)为左上，(1,1)为右下
-	* @param bIsNonlinear      动画是否为非线性
-	*/
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = 1, Duration = 1.f, IsIncrement = 1), Category = "AnimationHelper|UMGAnimation")
-		static FUMGAniamtionStruct MakeUMGAnimation(UWidget* InWidget, float Duration, bool IsIncrement,
-			FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot, bool bIsNonlinear);
-
-	/**
-	* @param StopPreAction     立刻把上一个动作置为结束时的状态
-	*/
 	UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject"), Category = "AnimationHelper|UMGAnimation")
-		static void PlayUMGAnimation(UObject* WorldContextObject, FLatentActionInfo LatentInfo, TArray<FUMGAniamtionStruct> AnimationStructArray, bool StopPreAction = false);
+		static void PlayUMGAnimation(UObject* WorldContextObject, FLatentActionInfo LatentInfo, TArray<FUMGAnimationStruct> AnimationStructArr, bool bStopPreAction = false);
 
 };

@@ -3,259 +3,277 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine.h"
 #include "LatentActions.h"
-#include "Runtime/Engine/Classes/Components/SceneComponent.h"
-#include "Engine/LatentActionManager.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Engine/LatentActionManager.h"
+#include "Runtime/Engine/Classes/Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "ComponentAnimationHelper.generated.h"
-
-/**
- * 
- */
-
-static TArray<USceneComponent*> ComponentLatentInfoArr;
-
-class ComponentAnimationClass
-{
-	float TotalTime;
-	float TimeNow;
-	USceneComponent* InComponent;
-	bool bIsIncrement;
-	FVector NewVector;
-	FRotator NewRotation;
-	FVector NewScale;
-	bool bIsNonlinear;
-	FVector ComponentLocation;
-	FRotator ComponentRotation;
-	FVector ComponentScale;
-	bool bFinished;
-	FVector TargetLocation;
-	FRotator TargetRotation;
-	FVector TargetScale;
-
-public:
-	ComponentAnimationClass(float Duration, USceneComponent* Com, bool IsInc, FVector Vec, FRotator Rot, FVector Sca, bool IsNonlinear)
-		: TotalTime(Duration)
-		, TimeNow(0.f)
-		, InComponent(Com)
-		, bIsIncrement(IsInc)
-		, NewVector(Vec)
-		, NewRotation(Rot)
-		, NewScale(Sca)
-		, bIsNonlinear(IsNonlinear)
-		, bFinished(false)
-		, TargetLocation(FVector(0.f, 0.f, 0.f))
-		, TargetRotation(FRotator(0.f, 0.f, 0.f))
-	{
-		ComponentLocation = InComponent->RelativeLocation;
-		ComponentRotation = InComponent->RelativeRotation;
-		ComponentScale = InComponent->RelativeScale3D;
-		SetTargetTransform();
-	}
-
-	void myInit()
-	{
-		SetTargetTransform();
-		ComponentLocation = InComponent->RelativeLocation;
-		ComponentRotation = InComponent->RelativeRotation;
-		ComponentScale = InComponent->RelativeScale3D;
-	}
-
-	void myUpdateOperation(float myElapsedTime)
-	{
-		TimeNow += myElapsedTime;
-
-		if (TimeNow < TotalTime)
-		{
-			if (bIsNonlinear)
-			{
-				InComponent->SetRelativeLocation(UKismetMathLibrary::VInterpTo(InComponent->RelativeLocation, TargetLocation, myElapsedTime, 6 / TotalTime));
-				InComponent->SetRelativeRotation(UKismetMathLibrary::RInterpTo(InComponent->RelativeRotation, TargetRotation, myElapsedTime, 6 / TotalTime));
-				InComponent->SetRelativeScale3D(UKismetMathLibrary::VInterpTo(InComponent->RelativeScale3D, TargetScale, myElapsedTime, 6 / TotalTime));
-			}
-			else
-			{
-				InComponent->SetRelativeLocation((TimeNow / TotalTime) * (TargetLocation - ComponentLocation) + ComponentLocation);
-				InComponent->SetRelativeRotation((TimeNow / TotalTime) * (TargetRotation - ComponentRotation) + ComponentRotation);
-				InComponent->SetRelativeScale3D((TimeNow / TotalTime) * (TargetScale - ComponentScale) + ComponentScale);
-			}
-		}
-		else
-		{
-			InComponent->SetRelativeRotation(TargetRotation);
-			InComponent->SetRelativeLocation(TargetLocation);
-			InComponent->SetRelativeScale3D(TargetScale);
-			
-			bFinished = true;
-		}
-	}
-
-	bool IsFinished()
-	{
-		return bFinished;
-	}
-
-	void SetStartTransform(FVector StartVec, FRotator StartRot, FVector StartSca)
-	{
-		ComponentLocation = StartVec;
-		ComponentRotation = StartRot;
-		ComponentScale = StartSca;
-
-		SetTargetTransform();
-	}
-
-	void GetTargetTransform(FVector& TargetVec, FRotator& TargetRot, FVector& TargetSca)
-	{
-		TargetVec = TargetLocation;
-		TargetRot = TargetRotation;
-		TargetSca = TargetScale;
-	}
-
-	USceneComponent* GetInComponent()
-	{
-		return InComponent;
-	}
-
-	void SetTargetTransform()
-	{
-		if (bIsIncrement)
-		{
-			TargetLocation = ComponentLocation + NewVector;
-			TargetRotation = ComponentRotation + NewRotation;
-			TargetScale = ComponentScale + NewScale;
-		}
-		else
-		{
-			TargetLocation = NewVector;
-			TargetRotation = NewRotation;
-			TargetScale = NewScale;
-		}
-	}
-};
 
 USTRUCT(BlueprintType)
 struct FComponentAnimationStruct
 {
 	GENERATED_USTRUCT_BODY()
-		ComponentAnimationClass* AnimationClass;
-	
+
+	/** 操作的component对象 */
+	UPROPERTY(BlueprintReadWrite)
+		USceneComponent* InComponent = nullptr;
+
+	/** 动画的总时长 */
+	UPROPERTY(BlueprintReadWrite)
+		float Duration = 1;
+
+	/** 否作为物体原状态的增量添加上去，不是增量则为目标 */
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsIncrement = true;
+
+	/** Vector的增量或目标Vector */
+	UPROPERTY(BlueprintReadWrite)
+		FVector NewLocation = FVector(0, 0, 0);
+
+	/** Rotation的增量或目标Rotation */
+	UPROPERTY(BlueprintReadWrite)
+		FRotator NewRotation = FRotator(0, 0, 0);
+
+	/** Scale的增量或目标Scale */
+	UPROPERTY(BlueprintReadWrite)
+		FVector NewScale = FVector(0, 0, 0);
+
+	/** 动画是否为非线性 */
+	UPROPERTY(BlueprintReadWrite)
+		bool bIsNonlinear = true;
+
+	FVector PreTargetLocation;
+	FRotator PreTargetRotation;
+	FVector PreTargetScale;
+
+	void SetPreTarget(FVector PreTargetLoc, FRotator PreTargetRot, FVector PreTargetSca)
+	{
+		PreTargetLocation = PreTargetLoc;
+		PreTargetRotation = PreTargetRot;
+		PreTargetScale = PreTargetSca;
+	}
+
+	void GetTargetParam(FVector& TargetLocation, FRotator& TargetRotation, FVector& TargetScale)
+	{
+		if (bIsIncrement)
+		{
+			TargetLocation = PreTargetLocation + NewLocation;
+			TargetRotation = PreTargetRotation + NewRotation;
+			TargetScale = PreTargetScale + NewScale;
+		}
+		else
+		{
+			TargetLocation = NewLocation;
+			TargetRotation = NewRotation;
+			TargetScale = NewScale;
+		}
+	}
+
 };
 
-class ComponentAnimationContainer : public FPendingLatentAction
+class ComponentAnimationHelper
+{
+private:
+
+	TMap<USceneComponent*, TArray<FComponentAnimationStruct>> ComponentAnimationMap;
+
+public:
+
+	static ComponentAnimationHelper* GetInstance()
+	{
+		static ComponentAnimationHelper Instance;
+
+		return &Instance;
+	}
+
+	void StopAllAnimaAndGetPreTarget(USceneComponent* TargetComponent, FVector& PreTargetLoc, FRotator& PreTargetRot, FVector& PreTargetSca)
+	{
+		TArray<FComponentAnimationStruct>* AnimationStructArrPtr = ComponentAnimationMap.Find(TargetComponent);
+		if (AnimationStructArrPtr && AnimationStructArrPtr->Num() > 0)
+		{
+			TArray<FComponentAnimationStruct> AnimationStructArr = *AnimationStructArrPtr;
+			AnimationStructArr[0].GetTargetParam(PreTargetLoc, PreTargetRot, PreTargetSca);
+
+			for (int32 i = 1; i < AnimationStructArr.Num(); i++)
+			{
+				AnimationStructArr[i].SetPreTarget(PreTargetLoc, PreTargetRot, PreTargetSca);
+				AnimationStructArr[i].GetTargetParam(PreTargetLoc, PreTargetRot, PreTargetSca);
+			}
+
+			ComponentAnimationMap.Remove(TargetComponent);
+		}
+		else
+		{
+			PreTargetLoc = TargetComponent->GetComponentLocation();
+			PreTargetRot = TargetComponent->GetComponentRotation();
+			PreTargetSca = TargetComponent->GetComponentScale();
+		}
+	}
+	
+	void Add(USceneComponent* InComponent, TArray<FComponentAnimationStruct> InAnimationStructArr)
+	{
+		if (TArray<FComponentAnimationStruct>* AnimationStructArr = ComponentAnimationMap.Find(InComponent))
+		{
+			AnimationStructArr->Append(InAnimationStructArr);
+		}
+		else
+		{
+			ComponentAnimationMap.Add(InComponent, InAnimationStructArr);
+		}
+	}
+
+	bool HasAnimation(USceneComponent* InComponent)
+	{
+		if (TArray<FComponentAnimationStruct>* AnimationStructArr = ComponentAnimationMap.Find(InComponent))
+		{
+			if (AnimationStructArr->Num() > 0)
+				return true;
+		}
+
+		return false;
+	}
+
+
+	TArray<FComponentAnimationStruct>* GetAnimationStructArr(USceneComponent* InComponent)
+	{
+		return ComponentAnimationMap.Find(InComponent);
+	}
+};
+
+class FComponentAnimationContainer : public FPendingLatentAction
 {
 public:
-	USceneComponent* MovingComponent;
 	FName ExecutionFunction;
 	int32 OutputLink;
 	FWeakObjectPtr CallbackTarget;
-	int32 UUID;
-	bool RunLock;
-	TArray<ComponentAnimationClass*> ComponentAnimationArray;
 
-	ComponentAnimationContainer(const FLatentActionInfo& LatentInfo, ComponentAnimationClass* InAnimationClass, USceneComponent* InComponent)
-		: MovingComponent(InComponent)
-		, ExecutionFunction(LatentInfo.ExecutionFunction)
+	USceneComponent* ComponentPtr;
+
+	float TotalTime;
+	bool bIsIncrement;
+	FVector ComponentLocation;
+	FRotator ComponentRotation;
+	FVector ComponentScale;
+	bool bIsNonlinear;
+
+	FVector TargetLocation;
+	FRotator TargetRotation;
+	FVector TargetScale;
+
+	ComponentAnimationHelper* AnimationHelper;
+	TArray<FComponentAnimationStruct>* AnimationStructArr;
+
+	float TimeNow;
+	int32 StructArrIndex;
+
+	bool bStopThisAction;
+
+	FComponentAnimationContainer(const FLatentActionInfo& LatentInfo, USceneComponent* InComponent)
+		: ExecutionFunction(LatentInfo.ExecutionFunction)
 		, OutputLink(LatentInfo.Linkage)
 		, CallbackTarget(LatentInfo.CallbackTarget)
-		, UUID(LatentInfo.UUID)
-		, RunLock(false)
+		, ComponentPtr(InComponent)
+		, bStopThisAction(false)
 	{
-		ComponentAnimationArray.Add(InAnimationClass);
+		AnimationHelper = ComponentAnimationHelper::GetInstance();
+		if (AnimationHelper->HasAnimation(InComponent))
+		{
+			GetNewStructArr();
+			GetDataFromNewStruct();
+
+			ComponentLocation = ComponentPtr->GetComponentLocation();
+			ComponentRotation = ComponentPtr->GetComponentRotation();
+			ComponentScale = ComponentPtr->GetComponentScale();
+
+			TimeNow = 0.f;
+			StructArrIndex = 0;
+		}
+		else
+		{
+			StopThisLatent();
+		}
 	}
 
 	virtual void UpdateOperation(FLatentResponse& Response) override
 	{
-		if (!RunLock && ComponentAnimationArray.Num() > 0)
+		TimeNow += Response.ElapsedTime();
+
+		if (bStopThisAction)
 		{
-			ComponentAnimationArray[0]->myInit();
-			RunLock = true;
+			Response.TriggerLink(ExecutionFunction, OutputLink, CallbackTarget);
+			Response.DoneIf(true);
 		}
-		else if(RunLock)
+
+		if (TimeNow < TotalTime)
 		{
-			if (!ComponentAnimationArray[0]->IsFinished())
+			if (bIsNonlinear)
 			{
-				ComponentAnimationArray[0]->myUpdateOperation(Response.ElapsedTime());
+				ComponentPtr->SetWorldLocation(UKismetMathLibrary::VInterpTo(ComponentPtr->GetComponentLocation(), TargetLocation, Response.ElapsedTime(), 6 / TotalTime));
+				ComponentPtr->SetWorldRotation(UKismetMathLibrary::RInterpTo(ComponentPtr->GetComponentRotation(), TargetRotation, Response.ElapsedTime(), 6 / TotalTime));
+				ComponentPtr->SetWorldScale3D(UKismetMathLibrary::VInterpTo(ComponentPtr->GetComponentScale(), TargetScale, Response.ElapsedTime(), 6 / TotalTime));
 			}
 			else
 			{
-				if (ComponentAnimationArray.Num() > 1)
-				{
-					FVector TargetLoc;
-					FRotator TargetRot;
-					FVector TargetSca;
-					ComponentAnimationArray[0]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
-					ComponentAnimationArray[1]->SetStartTransform(TargetLoc, TargetRot, TargetSca);
-				}
-
-				delete ComponentAnimationArray[0];
-				ComponentAnimationArray[0] = nullptr;
-				ComponentAnimationArray.RemoveAt(0);
-				RunLock = false;
+				ComponentPtr->SetWorldLocation((TimeNow / TotalTime) * (TargetLocation - ComponentLocation) + ComponentLocation);
+				ComponentPtr->SetWorldRotation((TimeNow / TotalTime) * (TargetRotation - ComponentRotation) + ComponentRotation);
+				ComponentPtr->SetWorldScale3D((TimeNow / TotalTime) * (TargetScale - ComponentScale) + ComponentScale);
 			}
 		}
 		else
 		{
-			ComponentLatentInfoArr.Remove(MovingComponent);
-			Response.TriggerLink(ExecutionFunction, OutputLink, CallbackTarget);
-			Response.DoneIf(true);
+			ComponentPtr->SetWorldLocation(TargetLocation);
+			ComponentPtr->SetWorldRotation(TargetRotation);
+			ComponentPtr->SetWorldScale3D(TargetScale);
+
+			if(AnimationStructArr->Num() > 0)
+				AnimationStructArr->RemoveAt(0);
+
+			if (AnimationStructArr->Num() > 0)
+			{
+				AnimationStructArr->GetData()->SetPreTarget(TargetLocation, TargetRotation, TargetScale);
+				GetDataFromNewStruct();
+			}
+			else
+				StopThisLatent();
 		}
 	}
 
-	void AddAnimation(ComponentAnimationClass* ComponentAnimation, bool FinishPreAction)
+	void GetNewStructArr()
 	{
-		if (FinishPreAction)
-		{
-			FVector TargetLoc;
-			FRotator TargetRot;
-			FVector TargetSca;
-			if (ComponentAnimationArray.Num() > 1)
-			{
-				for (int x = 0; x < ComponentAnimationArray.Num() - 1; x++)
-				{
-					ComponentAnimationArray[x]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
-					ComponentAnimationArray[x + 1]->SetStartTransform(TargetLoc, TargetRot, TargetSca);
-				}
-				ComponentAnimationArray[ComponentAnimationArray.Num() - 1]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
-			}
-			else if(ComponentAnimationArray.Num() == 1)
-			{
-				ComponentAnimationArray[0]->GetTargetTransform(TargetLoc, TargetRot, TargetSca);
-			}
-			ComponentAnimation->SetStartTransform(TargetLoc, TargetRot, TargetSca);
-			ComponentAnimationArray.Empty();
-			RunLock = false;
-		}
-		ComponentAnimationArray.Add(ComponentAnimation);
+		AnimationStructArr = AnimationHelper->GetAnimationStructArr(ComponentPtr);
 	}
+
+	void GetDataFromNewStruct()
+	{
+		TotalTime = AnimationStructArr->GetData()->Duration;
+		bIsIncrement = AnimationStructArr->GetData()->bIsIncrement;
+		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
+		AnimationStructArr->GetData()->GetTargetParam(TargetLocation, TargetRotation, TargetScale);
+		TimeNow = 0.f;
+	}
+
+	void StopThisLatent()
+	{
+		bStopThisAction = true;
+	}
+
 };
 
+/**
+ * 
+ */
 UCLASS()
 class ANIMATIONMODULE_API UComponentAnimationHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-
+	
 public:
-
-	/**
-	* @param InComponent       操作的component对象
-	* @param Duration          动画的总时长
-	* @param IsIncrement       否作为物体原状态的增量添加上去，不是增量则为目标
-	* @param NewVector         Vector的增量或目标Vector
-	* @param NewRotation       Rotation的增量或目标Rotation
-	* @param NewScale          Scale的增量或目标Scale
-	* @param IsNonlinear       动画是否为非线性
-	*/
-	UFUNCTION(BlueprintPure, meta = (Duration = 1.f, IsIncrement = 1, AdvancedDisplay = 1), Category = "AnimationHelper|ComponentAnimation")
-		static FComponentAnimationStruct MakeComponentAnimation(USceneComponent* InComponent, float Duration, 
-			bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale, bool bIsNonlinear);
 
 	/**
 	* @param StopPreAction     立刻把上一个动作置为结束时的状态
 	*/
 	UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject"), Category = "AnimationHelper|ComponentAnimation")
-		static void PlayComponentAnimation(UObject* WorldContextObject, FLatentActionInfo LatentInfo, TArray<FComponentAnimationStruct> AnimationStructArray, bool StopPreAction = false);
+		static void PlayComponentAnimation(UObject* WorldContextObject, FLatentActionInfo LatentInfo, TArray<FComponentAnimationStruct> AnimationStructArray, bool bStopPreAction = false);
 
 };
-

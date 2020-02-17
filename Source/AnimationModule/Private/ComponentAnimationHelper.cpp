@@ -1,46 +1,63 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "ComponentAnimationHelper.h"
+#include "Engine.h"
 
-FComponentAnimationStruct UComponentAnimationHelper::MakeComponentAnimation(USceneComponent* InComponent, float Duration, bool IsIncrement, FVector NewVector, FRotator NewRotation, FVector NewScale, bool IsNonlinear)
-{
-	ComponentAnimationClass* AnimationClass = new ComponentAnimationClass(Duration, InComponent, IsIncrement, NewVector, NewRotation, NewScale, IsNonlinear);
-	FComponentAnimationStruct AnimationStruct;
-	AnimationStruct.AnimationClass = AnimationClass;
-
-	return AnimationStruct;
-}
-
-void UComponentAnimationHelper::PlayComponentAnimation(UObject * WorldContextObject, FLatentActionInfo LatentInfo, TArray<FComponentAnimationStruct> AnimationStructArray, bool StopPreAction)
+void UComponentAnimationHelper::PlayComponentAnimation(UObject * WorldContextObject, FLatentActionInfo LatentInfo, TArray<FComponentAnimationStruct> AnimationStructArray, bool bStopPreAction)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(WorldContextObject))
 	{
-		TArray<USceneComponent*> ComponentBeenAdd;
-		ComponentAnimationContainer* AnimationContainer;
 		FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-		for (FComponentAnimationStruct ComponentAnimationStruct : AnimationStructArray)
+		ComponentAnimationHelper* AnimationHelper = ComponentAnimationHelper::GetInstance();
+
+		TMap<USceneComponent*, TArray<FComponentAnimationStruct>> AnimationStructMapBuf;
+		for (FComponentAnimationStruct AnimationStruct : AnimationStructArray)
 		{
-			if (!ComponentLatentInfoArr.Contains(ComponentAnimationStruct.AnimationClass->GetInComponent()))
+			if (TArray<FComponentAnimationStruct>* AnimationArrPtr = AnimationStructMapBuf.Find(AnimationStruct.InComponent))
 			{
-				LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(ComponentAnimationStruct.AnimationClass->GetInComponent()), new ComponentAnimationContainer(LatentInfo, ComponentAnimationStruct.AnimationClass, ComponentAnimationStruct.AnimationClass->GetInComponent()));
-				ComponentLatentInfoArr.Add(ComponentAnimationStruct.AnimationClass->GetInComponent());
-				if(StopPreAction)
-					ComponentBeenAdd.Add(ComponentAnimationStruct.AnimationClass->GetInComponent());
+				AnimationArrPtr->Add(AnimationStruct);
 			}
 			else
 			{
-				if ((AnimationContainer = LatentActionManager.FindExistingAction<ComponentAnimationContainer>(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(ComponentAnimationStruct.AnimationClass->GetInComponent()))) != NULL)
+				TArray<FComponentAnimationStruct> AnimationArr;
+				AnimationArr.Add(AnimationStruct);
+				AnimationStructMapBuf.Add(AnimationStruct.InComponent, AnimationArr);
+			}
+
+		}
+
+		for (TPair<USceneComponent*, TArray<FComponentAnimationStruct>> MapPair : AnimationStructMapBuf)
+		{
+			if (FComponentAnimationContainer* ComponentAnimationContainer = LatentActionManager.FindExistingAction<FComponentAnimationContainer>(LatentInfo.CallbackTarget,
+				reinterpret_cast<intptr_t>(MapPair.Key)))
+			{
+				if (bStopPreAction)
 				{
-					if (StopPreAction && !ComponentBeenAdd.Contains(ComponentAnimationStruct.AnimationClass->GetInComponent()))
-					{
-						ComponentBeenAdd.Add(ComponentAnimationStruct.AnimationClass->GetInComponent());
-						AnimationContainer->AddAnimation(ComponentAnimationStruct.AnimationClass, true);
-					}
-					else
-					{
-						AnimationContainer->AddAnimation(ComponentAnimationStruct.AnimationClass, false);
-					}
+					FVector PreTargetLoc, PreTargetSca;
+					FRotator PreTargetRot;
+
+					AnimationHelper->StopAllAnimaAndGetPreTarget(MapPair.Key, PreTargetLoc, PreTargetRot, PreTargetSca);
+					MapPair.Value[0].SetPreTarget(PreTargetLoc, PreTargetRot, PreTargetSca);
+					AnimationHelper->Add(MapPair.Key, MapPair.Value);
+
+					ComponentAnimationContainer->GetNewStructArr();
+					ComponentAnimationContainer->GetDataFromNewStruct();
 				}
+				else
+				{
+					MapPair.Value[0].SetPreTarget(MapPair.Key->GetComponentLocation(), MapPair.Key->GetComponentRotation(), MapPair.Key->GetComponentScale());
+					AnimationHelper->Add(MapPair.Key, MapPair.Value);
+				}
+					
+			}
+			else
+			{
+				MapPair.Value[0].SetPreTarget(MapPair.Key->GetComponentLocation(), MapPair.Key->GetComponentRotation(), MapPair.Key->GetComponentScale());
+				AnimationHelper->Add(MapPair.Key, MapPair.Value);
+
+				LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(MapPair.Key),
+					new FComponentAnimationContainer(LatentInfo, MapPair.Key));
 			}
 		}
 	}

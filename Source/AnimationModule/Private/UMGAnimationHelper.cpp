@@ -1,46 +1,63 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+
 #include "UMGAnimationHelper.h"
+#include "Engine.h"
 
-
-FUMGAniamtionStruct UUMGAnimationHelper::MakeUMGAnimation(UWidget* InWidget, float Duration, bool IsIncrement, FVector2D NewPosition, FVector2D NewSize, FVector2D Pivot, bool bIsNonlinear)
-{
-	UMGAnimationClass* AnimationClass = new UMGAnimationClass(Duration, InWidget, IsIncrement, NewSize, NewPosition, Pivot, bIsNonlinear);
-	FUMGAniamtionStruct AnimationStruct;
-	AnimationStruct.AnimationClass = AnimationClass;
-
-	return AnimationStruct;
-}
-
-void UUMGAnimationHelper::PlayUMGAnimation(UObject * WorldContextObject, FLatentActionInfo LatentInfo, TArray<FUMGAniamtionStruct> AnimationStructArray, bool StopPreAction)
+void UUMGAnimationHelper::PlayUMGAnimation(UObject * WorldContextObject, FLatentActionInfo LatentInfo, TArray<FUMGAnimationStruct> AnimationStructArr, bool bStopPreAction)
 {
 	if (UWorld* World = GEngine->GetWorldFromContextObjectChecked(WorldContextObject))
 	{
-		TArray<UWidget*> UWidgetBeenAdd;
-		UMGAnimationContainer* AnimationContainer;
 		FLatentActionManager& LatentActionManager = World->GetLatentActionManager();
-		for (FUMGAniamtionStruct UMGAnimationStruct : AnimationStructArray)
+		UMGAnimationHelper* AnimationHelper = UMGAnimationHelper::GetInstance();
+
+		TMap<UWidget*, TArray<FUMGAnimationStruct>> AnimationStructMapBuf;
+		for (FUMGAnimationStruct AnimationStruct : AnimationStructArr)
 		{
-			if (!UMGLatentInfoArr.Contains(UMGAnimationStruct.AnimationClass->GetWidget()))
+			if (TArray<FUMGAnimationStruct>* AnimationArrPtr = AnimationStructMapBuf.Find(AnimationStruct.InWidget))
 			{
-				LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(UMGAnimationStruct.AnimationClass->GetWidget()), new UMGAnimationContainer(LatentInfo, UMGAnimationStruct.AnimationClass, UMGAnimationStruct.AnimationClass->GetWidget()));
-				UMGLatentInfoArr.Add(UMGAnimationStruct.AnimationClass->GetWidget());
-				if (StopPreAction)
-					UWidgetBeenAdd.Add(UMGAnimationStruct.AnimationClass->GetWidget());
+				AnimationArrPtr->Add(AnimationStruct);
 			}
 			else
 			{
-				if ((AnimationContainer = LatentActionManager.FindExistingAction<UMGAnimationContainer>(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(UMGAnimationStruct.AnimationClass->GetWidget()))) != NULL)
+				TArray<FUMGAnimationStruct> AnimationArr;
+				AnimationArr.Add(AnimationStruct);
+				AnimationStructMapBuf.Add(AnimationStruct.InWidget, AnimationArr);
+			}
+		}
+
+		for (TPair<UWidget*, TArray<FUMGAnimationStruct>> MapPair : AnimationStructMapBuf)
+		{
+			if (UCanvasPanelSlot* WidgetSlot = Cast<UCanvasPanelSlot>(MapPair.Key->Slot))
+			{
+				if (FUMGAnimationContainer* UMGAnimationContainer = LatentActionManager.FindExistingAction<FUMGAnimationContainer>(LatentInfo.CallbackTarget, 
+					reinterpret_cast<intptr_t>(MapPair.Key)))
 				{
-					if (StopPreAction && !UWidgetBeenAdd.Contains(UMGAnimationStruct.AnimationClass->GetWidget()))
+					if (bStopPreAction)
 					{
-						UWidgetBeenAdd.Add(UMGAnimationStruct.AnimationClass->GetWidget());
-						AnimationContainer->AddAnimation(UMGAnimationStruct.AnimationClass, true);
+						FVector2D PreTargetPos, PreTargetSiz;
+
+						AnimationHelper->StopAllAnimationAndGetPreTarget(MapPair.Key, PreTargetPos, PreTargetSiz);
+						MapPair.Value[0].SetPreTarget(PreTargetPos, PreTargetSiz);
+						AnimationHelper->Add(MapPair.Key, MapPair.Value);
+
+						UMGAnimationContainer->GetNewStructArr();
+						UMGAnimationContainer->GetDataFromNewStruct();
 					}
 					else
 					{
-						AnimationContainer->AddAnimation(UMGAnimationStruct.AnimationClass, false);
+						MapPair.Value[0].SetPreTarget(WidgetSlot->GetPosition(), WidgetSlot->GetSize());
+						AnimationHelper->Add(MapPair.Key, MapPair.Value);
 					}
+				}
+				else
+				{
+					
+					MapPair.Value[0].SetPreTarget(WidgetSlot->GetPosition(), WidgetSlot->GetSize());
+					AnimationHelper->Add(MapPair.Key, MapPair.Value);
+
+					LatentActionManager.AddNewAction(LatentInfo.CallbackTarget, reinterpret_cast<intptr_t>(MapPair.Key),
+						new FUMGAnimationContainer(LatentInfo, MapPair.Key));
 				}
 			}
 		}
