@@ -181,10 +181,7 @@ public:
 		{
 			GetNewStructArr();
 			GetDataFromNewStruct();
-
-			ComponentLocation = ComponentPtr->GetComponentLocation();
-			ComponentRotation = ComponentPtr->GetComponentRotation();
-			ComponentScale = ComponentPtr->GetComponentScale();
+			GetNewTransform();
 
 			TimeNow = 0.f;
 			StructArrIndex = 0;
@@ -233,6 +230,7 @@ public:
 			{
 				AnimationStructArr->GetData()->SetPreTarget(TargetLocation, TargetRotation, TargetScale);
 				GetDataFromNewStruct();
+				GetNewTransform();
 			}
 			else
 				StopThisLatent();
@@ -251,6 +249,13 @@ public:
 		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
 		AnimationStructArr->GetData()->GetTargetParam(TargetLocation, TargetRotation, TargetScale);
 		TimeNow = 0.f;
+	}
+
+	void GetNewTransform()
+	{
+		ComponentLocation = ComponentPtr->GetComponentLocation();
+		ComponentRotation = ComponentPtr->GetComponentRotation();
+		ComponentScale = ComponentPtr->GetComponentScale();
 	}
 
 	void StopThisLatent()

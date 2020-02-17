@@ -175,9 +175,7 @@ public:
 		{
 			GetNewStructArr();
 			GetDataFromNewStruct();
-
-			UMGPosition = WidgetSlot->GetPosition();
-			UMGSize = WidgetSlot->GetSize();
+			GetNewSlotData();
 			
 			TimeNow = 0.f;
 			StructArrIndex = 0;
@@ -224,6 +222,7 @@ public:
 			{
 				AnimationStructArr->GetData()->SetPreTarget(TargetPosition, TargetSize);
 				GetDataFromNewStruct();
+				GetNewSlotData();
 			}
 			else
 				StopThisLatent();
@@ -242,6 +241,12 @@ public:
 		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
 		AnimationStructArr->GetData()->GetTargetParam(TargetPosition, TargetSize);
 		TimeNow = 0.f;
+	}
+
+	void GetNewSlotData()
+	{
+		UMGPosition = WidgetSlot->GetPosition();
+		UMGSize = WidgetSlot->GetSize();
 	}
 
 	void StopThisLatent()
