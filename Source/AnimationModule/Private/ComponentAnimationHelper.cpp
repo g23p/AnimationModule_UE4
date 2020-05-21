@@ -24,7 +24,6 @@ void UComponentAnimationHelper::PlayComponentAnimation(UObject * WorldContextObj
 				AnimationArr.Add(AnimationStruct);
 				AnimationStructMapBuf.Add(AnimationStruct.InComponent, AnimationArr);
 			}
-
 		}
 
 		for (TPair<USceneComponent*, TArray<FComponentAnimationStruct>> MapPair : AnimationStructMapBuf)
@@ -41,7 +40,6 @@ void UComponentAnimationHelper::PlayComponentAnimation(UObject * WorldContextObj
 					MapPair.Value[0].SetPreTarget(PreTargetLoc, PreTargetRot, PreTargetSca);
 					AnimationHelper->Add(MapPair.Key, MapPair.Value);
 
-					ComponentAnimationContainer->GetNewStructArr();
 					ComponentAnimationContainer->GetDataFromNewStruct();
 				}
 				else

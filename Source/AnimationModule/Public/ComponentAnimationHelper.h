@@ -8,6 +8,7 @@
 #include "Engine/LatentActionManager.h"
 #include "Runtime/Engine/Classes/Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+
 #include "ComponentAnimationHelper.generated.h"
 
 USTRUCT(BlueprintType)
@@ -43,9 +44,14 @@ struct FComponentAnimationStruct
 	UPROPERTY(BlueprintReadWrite)
 		bool bIsNonlinear = true;
 
-	FVector PreTargetLocation;
-	FRotator PreTargetRotation;
-	FVector PreTargetScale;
+	UPROPERTY()
+		FVector PreTargetLocation;
+
+	UPROPERTY()
+		FRotator PreTargetRotation;
+
+	UPROPERTY()
+		FVector PreTargetScale;
 
 	void SetPreTarget(FVector PreTargetLoc, FRotator PreTargetRot, FVector PreTargetSca)
 	{
@@ -76,7 +82,8 @@ class ComponentAnimationHelper
 {
 private:
 
-	TMap<USceneComponent*, TArray<FComponentAnimationStruct>> ComponentAnimationMap;
+	UPROPERTY()
+		TMap<USceneComponent*, TArray<FComponentAnimationStruct>> ComponentAnimationMap;
 
 public:
 
@@ -85,6 +92,11 @@ public:
 		static ComponentAnimationHelper Instance;
 
 		return &Instance;
+	}
+
+	int32 Num()
+	{
+		return ComponentAnimationMap.Num();
 	}
 
 	void StopAllAnimaAndGetPreTarget(USceneComponent* TargetComponent, FVector& PreTargetLoc, FRotator& PreTargetRot, FVector& PreTargetSca)
@@ -162,7 +174,6 @@ public:
 	FVector TargetScale;
 
 	ComponentAnimationHelper* AnimationHelper;
-	TArray<FComponentAnimationStruct>* AnimationStructArr;
 
 	float TimeNow;
 	int32 StructArrIndex;
@@ -179,7 +190,6 @@ public:
 		AnimationHelper = ComponentAnimationHelper::GetInstance();
 		if (AnimationHelper->HasAnimation(InComponent))
 		{
-			GetNewStructArr();
 			GetDataFromNewStruct();
 			GetNewTransform();
 
@@ -223,31 +233,31 @@ public:
 			ComponentPtr->SetWorldRotation(TargetRotation);
 			ComponentPtr->SetWorldScale3D(TargetScale);
 
-			if(AnimationStructArr->Num() > 0)
-				AnimationStructArr->RemoveAt(0);
-
-			if (AnimationStructArr->Num() > 0)
+			if (AnimationHelper->GetAnimationStructArr(ComponentPtr)->Num() > 0)
 			{
-				AnimationStructArr->GetData()->SetPreTarget(TargetLocation, TargetRotation, TargetScale);
+				AnimationHelper->GetAnimationStructArr(ComponentPtr)->RemoveAt(0);
+			}
+
+			if (AnimationHelper->GetAnimationStructArr(ComponentPtr)->Num() > 0)
+			{
+				AnimationHelper->GetAnimationStructArr(ComponentPtr)->GetData()->SetPreTarget(TargetLocation, TargetRotation, TargetScale);
 				GetDataFromNewStruct();
 				GetNewTransform();
 			}
 			else
+			{
 				StopThisLatent();
+			}
 		}
-	}
-
-	void GetNewStructArr()
-	{
-		AnimationStructArr = AnimationHelper->GetAnimationStructArr(ComponentPtr);
 	}
 
 	void GetDataFromNewStruct()
 	{
-		TotalTime = AnimationStructArr->GetData()->Duration;
-		bIsIncrement = AnimationStructArr->GetData()->bIsIncrement;
-		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
-		AnimationStructArr->GetData()->GetTargetParam(TargetLocation, TargetRotation, TargetScale);
+		TotalTime = AnimationHelper->GetAnimationStructArr(ComponentPtr)->GetData()->Duration;
+		bIsIncrement = AnimationHelper->GetAnimationStructArr(ComponentPtr)->GetData()->bIsIncrement;
+		bIsNonlinear = AnimationHelper->GetAnimationStructArr(ComponentPtr)->GetData()->bIsNonlinear;
+		AnimationHelper->GetAnimationStructArr(ComponentPtr)->GetData()->GetTargetParam(TargetLocation, TargetRotation, TargetScale);
+
 		TimeNow = 0.f;
 	}
 

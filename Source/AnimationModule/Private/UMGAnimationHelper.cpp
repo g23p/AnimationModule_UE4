@@ -41,7 +41,6 @@ void UUMGAnimationHelper::PlayUMGAnimation(UObject * WorldContextObject, FLatent
 						MapPair.Value[0].SetPreTarget(PreTargetPos, PreTargetSiz);
 						AnimationHelper->Add(MapPair.Key, MapPair.Value);
 
-						UMGAnimationContainer->GetNewStructArr();
 						UMGAnimationContainer->GetDataFromNewStruct();
 					}
 					else

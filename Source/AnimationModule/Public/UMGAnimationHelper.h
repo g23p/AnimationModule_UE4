@@ -17,33 +17,38 @@ struct FUMGAnimationStruct
 	GENERATED_USTRUCT_BODY()
 
 	/** 操作的widget对象 */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		UWidget* InWidget = nullptr;
 
 	/** 动画的总时长 */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		float Duration = 1;
 
 	/** 否作为物体原状态的增量添加上去，不是增量则为目标 */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		bool bIsIncrement = true;
 
 	/** Position的增量或目标Position */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		FVector2D NewPosition = FVector2D(0.f, 0.f);
 
 	/** Size的增量或目标Size */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		FVector2D NewSize = FVector2D(0.f, 0.f);
 
 	/** 动画是否为非线性 */
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 		bool bIsNonlinear = true;
 
-	UCanvasPanelSlot* WidgetSlot;
+	UPROPERTY()
+		UCanvasPanelSlot* WidgetSlot;
 
-	FVector2D PreTargetPosition;
-	FVector2D PreTargetSize;
+	UPROPERTY()
+		FVector2D PreTargetPosition;
+
+	UPROPERTY()
+		FVector2D PreTargetSize;
+
 
 	void SetPreTarget(FVector2D PreTargetPos, FVector2D PreTargetSiz)
 	{
@@ -156,7 +161,6 @@ public:
 	FVector2D TargetSize;
 
 	UMGAnimationHelper* AnimationHelper;
-	TArray<FUMGAnimationStruct>* AnimationStructArr;
 	
 	float TimeNow;
 	int32 StructArrIndex;
@@ -173,7 +177,6 @@ public:
 		WidgetSlot = Cast<UCanvasPanelSlot>(UMGPtr->Slot);
 		if (WidgetSlot && AnimationHelper->HasAnimation(InWidget))
 		{
-			GetNewStructArr();
 			GetDataFromNewStruct();
 			GetNewSlotData();
 			
@@ -215,12 +218,12 @@ public:
 			WidgetSlot->SetPosition(TargetPosition);
 			WidgetSlot->SetSize(TargetSize);
 
-			if (AnimationStructArr->Num() > 0)
-				AnimationStructArr->RemoveAt(0);
+			if (AnimationHelper->GetAnimationStructArr(UMGPtr)->Num() > 0)
+				AnimationHelper->GetAnimationStructArr(UMGPtr)->RemoveAt(0);
 
-			if (AnimationStructArr->Num() > 0)
+			if (AnimationHelper->GetAnimationStructArr(UMGPtr)->Num() > 0)
 			{
-				AnimationStructArr->GetData()->SetPreTarget(TargetPosition, TargetSize);
+				AnimationHelper->GetAnimationStructArr(UMGPtr)->GetData()->SetPreTarget(TargetPosition, TargetSize);
 				GetDataFromNewStruct();
 				GetNewSlotData();
 			}
@@ -229,17 +232,12 @@ public:
 		}
 	}
 
-	void GetNewStructArr()
-	{
-		AnimationStructArr = AnimationHelper->GetAnimationStructArr(UMGPtr);
-	}
-
 	void GetDataFromNewStruct()
 	{
-		TotalTime = AnimationStructArr->GetData()->Duration;
-		bIsIncrement = AnimationStructArr->GetData()->bIsIncrement;
-		bIsNonlinear = AnimationStructArr->GetData()->bIsNonlinear;
-		AnimationStructArr->GetData()->GetTargetParam(TargetPosition, TargetSize);
+		TotalTime = AnimationHelper->GetAnimationStructArr(UMGPtr)->GetData()->Duration;
+		bIsIncrement = AnimationHelper->GetAnimationStructArr(UMGPtr)->GetData()->bIsIncrement;
+		bIsNonlinear = AnimationHelper->GetAnimationStructArr(UMGPtr)->GetData()->bIsNonlinear;
+		AnimationHelper->GetAnimationStructArr(UMGPtr)->GetData()->GetTargetParam(TargetPosition, TargetSize);
 		TimeNow = 0.f;
 	}
 
@@ -263,6 +261,9 @@ class ANIMATIONMODULE_API UUMGAnimationHelper : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
+	/**
+	* @param StopPreAction     立刻把上一个动作置为结束时的状态
+	*/
 	UFUNCTION(BlueprintCallable, meta = (Latent, LatentInfo = "LatentInfo", HidePin = "WorldContextObject", DefaultToSelf = "WorldContextObject"), Category = "AnimationHelper|UMGAnimation")
 		static void PlayUMGAnimation(UObject* WorldContextObject, FLatentActionInfo LatentInfo, TArray<FUMGAnimationStruct> AnimationStructArr, bool bStopPreAction = false);
 
