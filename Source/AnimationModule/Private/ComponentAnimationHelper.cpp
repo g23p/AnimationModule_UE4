@@ -41,6 +41,7 @@ void UComponentAnimationHelper::PlayComponentAnimation(UObject * WorldContextObj
 					AnimationHelper->Add(MapPair.Key, MapPair.Value);
 
 					ComponentAnimationContainer->GetDataFromNewStruct();
+					ComponentAnimationContainer->GetNewTransform();
 				}
 				else
 				{

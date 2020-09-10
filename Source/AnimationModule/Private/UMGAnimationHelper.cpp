@@ -42,6 +42,7 @@ void UUMGAnimationHelper::PlayUMGAnimation(UObject * WorldContextObject, FLatent
 						AnimationHelper->Add(MapPair.Key, MapPair.Value);
 
 						UMGAnimationContainer->GetDataFromNewStruct();
+						UMGAnimationContainer->GetNewSlotData();
 					}
 					else
 					{
